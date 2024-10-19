@@ -1,101 +1,158 @@
-import Image from "next/image";
+'use client'
+
+import { useState, useEffect } from 'react';
+import AddTodoForm from '../app/components/AddToForm';
+import TodoList from '../app/components/TodoList';
+import { Card } from '@/components/ui/card';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    const [todos, setTodos] = useState([]);
+    const [users, setUsers] = useState([{
+      id: 1,
+      name: 'John Doe',
+      email: 'john@example.com',
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    },{
+      id: 2,
+      name: 'Jane Doe',
+      email: 'jane@example.com',
+    }]);
+
+    useEffect(() => {
+        async function fetchData() {
+            const todoRes = await fetch('http://127.0.0.1:8000/todos');
+            const todos = await todoRes.json();
+            setTodos(todos);
+
+            const userRes = await fetch('/api/users');
+            const users = await userRes.json();
+            setUsers(users);
+        }
+
+        fetchData();
+    }, []);
+
+    const addTodo = async (newTodo) => {
+        const res = await fetch('/api/todos', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(newTodo),
+        });
+        const todo = await res.json();
+        setTodos([...todos, todo]);
+    };
+
+    const toggleComplete = async (id) => {
+        const todo = todos.find((t) => t.id === id);
+        const updatedTodo = { ...todo, completed: !todo.completed };
+
+        const res = await fetch(`/api/todos/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updatedTodo),
+        });
+
+        setTodos(
+            todos.map((t) => (t.id === id ? updatedTodo : t))
+        );
+    };
+
+    const deleteTodo = async (id) => {
+        await fetch(`/api/todos/${id}`, { method: 'DELETE' });
+        setTodos(todos.filter((t) => t.id !== id));
+    };
+
+    return (
+        <div>
+            <h1>Todo App</h1>
+            <Card>
+                <AddTodoForm addTodo={addTodo} users={users} />
+            </Card>
+            <TodoList todos={todos} toggleComplete={toggleComplete} deleteTodo={deleteTodo} />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+    );
 }
+
+
+
+
+// 'use client'
+
+// import Image from "next/image";
+// import { Input } from "@/components/ui/input"
+// import { Label } from "@/components/ui/label"
+// import {
+//   DropdownMenu,
+//   DropdownMenuContent,
+//   DropdownMenuLabel,
+//   DropdownMenuRadioGroup,
+//   DropdownMenuRadioItem,
+//   DropdownMenuSeparator,
+//   DropdownMenuTrigger,
+// } from "@/components/ui/dropdown-menu"
+// import { Button } from "@/components/ui/button"
+// import { useState } from "react";
+// import axios from "axios";
+
+// export default function Home() {
+//   const [title, setTitle] = useState("")
+//   const [selectedUser, setSelectedUser] = useState('')
+
+//   const handleSubmit = async (e) => { 
+//     e.preventDefault();
+//     console.log({title, selectedUser})
+    
+//     // Uncomment the following code when you're ready to make the API call
+//     // await axios.post(url, {title, selectedUser})
+//     // .then(
+//     //   (response) => {
+//     //     console.log(response);
+//     //   },
+//     //   (error) => {
+//     //     console.log(error);
+//     //   }
+//     // )
+//   }
+
+//   return (
+//     <div className="p-4">
+//       <form onSubmit={handleSubmit} className="space-y-4">
+//         <div className="grid w-full max-w-sm items-center gap-1.5">
+//           <Label htmlFor="title">Title</Label>
+//           <Input 
+//             type="text" 
+//             id="title" 
+//             placeholder="Add a title" 
+//             value={title} 
+//             onChange={(e) => setTitle(e.target.value)} 
+//           />
+//         </div>
+//         <div>
+//           <DropdownMenu>
+//             <DropdownMenuTrigger asChild>
+//               <Button variant="outline" className="w-52">
+//                 {selectedUser ? selectedUser.charAt(0).toUpperCase() + selectedUser.slice(1) : 'Select User Type'}
+//               </Button>
+//             </DropdownMenuTrigger>
+//             <DropdownMenuContent className="w-56">
+//               <DropdownMenuLabel>Select User Type</DropdownMenuLabel>
+//               <DropdownMenuSeparator />
+//               <DropdownMenuRadioGroup value={selectedUser} onValueChange={setSelectedUser}>
+//                 <DropdownMenuRadioItem value="admin">Admin</DropdownMenuRadioItem>
+//                 <DropdownMenuRadioItem value="staff">Staff</DropdownMenuRadioItem>
+//                 <DropdownMenuRadioItem value="trainee">Trainee</DropdownMenuRadioItem>
+//               </DropdownMenuRadioGroup>
+//             </DropdownMenuContent>
+//           </DropdownMenu>
+//         </div>
+//         <div>
+//           <Button type="submit">Submit</Button>
+//         </div>
+//       </form>
+//     </div>
+//   );
+// }
